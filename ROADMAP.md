@@ -1,4 +1,4 @@
-# Cortex Roadmap
+# Nocciolo Roadmap
 
 High-level phased plan. This is a living document — priorities will shift based on real usage and feedback as we build in public.
 
@@ -14,19 +14,19 @@ High-level phased plan. This is a living document — priorities will shift base
 
 ## Phase 1 — Core CLI + Hindsight Bank Config
 
-- [ ] `cortex init` — detect project root, scaffold `.cortex/` config
+- [ ] `nocciolo init` — detect project root, scaffold `.nocciolo/` config
 - [ ] Bank template generation for Hindsight (mission, directives, extraction settings)
 - [ ] Sensible defaults for typical full-stack / web projects
-- [ ] `cortex configure` — interactive + non-interactive bank setup
+- [ ] `nocciolo configure` — interactive + non-interactive bank setup
 - [ ] Basic validation and dry-run support
 
-**Goal:** A developer can point Cortex at a repo and get a ready-to-apply Hindsight bank template in under a minute.
+**Goal:** A developer can point Nocciolo at a repo and get a ready-to-apply Hindsight bank template in under a minute.
 
 ## Phase 2 — Knowledge Curation & Seeding
 
 - [ ] Project scanner for durable sources (README, `/docs`, ADRs, AGENTS.md, standards, key schemas)
 - [ ] Extraction heuristics that prefer decisions, invariants, and architecture over ephemeral content
-- [ ] `cortex seed` — retain high-signal knowledge into the configured bank with provenance
+- [ ] `nocciolo seed` — retain high-signal knowledge into the configured bank with provenance
 - [ ] Incremental / re-seed support
 - [ ] Simple provenance tracking (source file + commit)
 
@@ -34,9 +34,9 @@ High-level phased plan. This is a living document — priorities will shift base
 
 ## Phase 3 — Local Hosting & Agent Integration
 
-- [ ] Docker / local Hindsight helper (`cortex docker` or equivalent)
+- [ ] Docker / local Hindsight helper (`nocciolo docker` or equivalent)
 - [ ] MCP endpoint generation for Cursor, Claude Code, Roo, Codex, etc.
-- [ ] `cortex mcp` — emit ready-to-paste configs and rules
+- [ ] `nocciolo mcp` — emit ready-to-paste configs and rules
 - [ ] Optional updates to `AGENTS.md` / Cursor rules that tell agents to prefer the project bank
 - [ ] Single-bank focus (multi-bank later)
 
@@ -61,7 +61,7 @@ High-level phased plan. This is a living document — priorities will shift base
 - [ ] Lightweight inspection UI (optional, later)
 - [ ] Deeper ADR and decision-record parsers
 
-**Goal:** Cortex becomes the durable knowledge layer that agentic workflows can reliably build on.
+**Goal:** Nocciolo becomes the durable knowledge layer that agentic workflows can reliably build on.
 
 ---
 

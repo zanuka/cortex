@@ -1,5 +1,5 @@
 ---
-description: TypeScript CLI conventions for Cortex
+description: TypeScript CLI conventions for Nocciolo
 globs: ["**/*.{ts,tsx,js,mjs,cjs}", "package.json", "tsconfig*.json"]
 alwaysApply: false
 ---

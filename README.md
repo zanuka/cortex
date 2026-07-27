@@ -1,6 +1,10 @@
-# Cortex
+# Nocciolo
 
 **Company brain config for AI agents.**
+
+Nocciolo (Italian for kernel / core) fits the vision well — the durable core of project knowledge that agents inherit.
+
+## Goal 
 
 Seed Hindsight memory banks from durable project docs, ADRs, and decisions so agents inherit shared context instead of rediscovering it every session.
 
@@ -19,13 +23,13 @@ Traditional documentation is written for humans. Agent memory systems need struc
 
 ## The Vision
 
-Cortex is the **company brain config** layer.
+Nocciolo is the **company brain config** layer.
 
 It turns the durable knowledge already living in your repository into a properly configured memory bank that agents can retain, recall, and reflect against — starting with [Hindsight](https://hindsight.vectorize.io).
 
 Agents inherit shared context instead of rediscovering it.
 
-## What Cortex Does
+## What Nocciolo Does
 
 - **Scans** your project for durable knowledge (READMEs, ADRs, standards, domain docs, schemas)
 - **Configures** a Hindsight memory bank with a clear mission, directives, and extraction settings tuned for software projects
@@ -39,16 +43,16 @@ Later versions will support additional memory backends, event-driven updates, an
 
 ```bash
 # From your project root
-npx @cortex-ai/cli init
+npx @nocciolo-ai/cli init
 
 # Configure a Hindsight bank for this project
-cortex configure
+nocciolo configure
 
 # Seed durable knowledge into the bank
-cortex seed
+nocciolo seed
 
 # Emit MCP / agent config snippets
-cortex mcp
+nocciolo mcp
 ```
 
 The CLI is under active development. The goal is a zero-to-useful bank in under five minutes.
@@ -58,12 +62,12 @@ The CLI is under active development. The goal is a zero-to-useful bank in under 
 - **Durable over ephemeral** — only knowledge that should outlive a single session or model change
 - **Local control** — self-hostable, version-controlled, no forced cloud dependency
 - **Agent-native** — missions, directives, and structure that map cleanly to how modern memory systems actually work
-- **Traditional craft first** — clear architecture, ADRs, and standards remain the source of truth; Cortex amplifies them for agents
+- **Traditional craft first** — clear architecture, ADRs, and standards remain the source of truth; Nocciolo amplifies them for agents
 - **Progressive** — start simple (single bank, one project), grow into multi-bank, multi-repo, and event-driven workflows
 
 ## Status
 
-Cortex is in the earliest public stage. We are building in the open.
+Nocciolo is in the earliest public stage. We are building in the open.
 
 See [ROADMAP.md](./ROADMAP.md) for the high-level phased plan.
 

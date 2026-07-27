@@ -1,12 +1,12 @@
 ---
-description: Core project rules for Cortex — company brain config for AI agents
+description: Core project rules for Nocciolo — company brain config for AI agents
 globs: ["**/*"]
 alwaysApply: true
 ---
 
-# Cortex Core Rules
+# Nocciolo Core Rules
 
-You are working on **Cortex**, an open-source CLI that turns durable project knowledge into Hindsight memory banks (and later other providers) so AI agents inherit shared context.
+You are working on **Nocciolo**, an open-source CLI that turns durable project knowledge into Hindsight memory banks (and later other providers) so AI agents inherit shared context.
 
 ## Non-negotiable principles
 

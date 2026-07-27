@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Cortex is in early public development. Security fixes will be applied to the latest main branch.
+Nocciolo is in early public development. Security fixes will be applied to the latest main branch.
 
 | Version | Supported          |
 | ------- | ------------------ |
@@ -28,4 +28,4 @@ Please include:
 
 We will acknowledge receipt as soon as possible and work with you to understand and address the issue.
 
-Thank you for helping keep Cortex and its users safe.
+Thank you for helping keep Nocciolo and its users safe.

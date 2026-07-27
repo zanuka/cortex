@@ -1,6 +1,6 @@
-# Contributing to Cortex
+# Contributing to Nocciolo
 
-Thanks for your interest in contributing. Cortex is being developed in public and we welcome thoughtful collaboration.
+Thanks for your interest in contributing. Nocciolo is being developed in public and we welcome thoughtful collaboration.
 
 ## Getting Started
 
@@ -14,7 +14,7 @@ Once the TypeScript CLI scaffold lands:
 
 ```bash
 git clone <repo-url>
-cd cortex
+cd nocciolo
 npm install
 npm run build   # or the equivalent once defined
 ```

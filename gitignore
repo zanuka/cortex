@@ -44,9 +44,9 @@ coverage/
 Thumbs.db
 Desktop.ini
 
-# Cortex local / generated state
-.cortex/local/
-.cortex/cache/
+# Nocciolo local / generated state
+.nocciolo/local/
+.nocciolo/cache/
 *.bank-state.json
 
 # Temporary

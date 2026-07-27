@@ -1,10 +1,10 @@
-# AGENTS.md — Cortex
+# AGENTS.md — Nocciolo
 
-This file is the primary source of truth for any AI agent working on Cortex.
+This file is the primary source of truth for any AI agent working on Nocciolo.
 
 ## Project Identity
 
-Cortex is a **company brain config** utility.
+Nocciolo is a **company brain config** utility.
 
 It helps developers turn durable project knowledge (docs, ADRs, decisions, domain references) into structured memory banks — starting with Hindsight — so AI agents inherit shared context instead of rediscovering it every session.
 
@@ -19,7 +19,7 @@ We are building this in public as open source.
    Favor self-hostable, version-controlled, offline-capable designs. Avoid forced cloud dependencies.
 
 3. **Amplify existing craft**  
-   Cortex does not replace ADRs, architecture docs, or coding standards. It makes them usable by agents.
+   Nocciolo does not replace ADRs, architecture docs, or coding standards. It makes them usable by agents.
 
 4. **CLI-first, progressive enhancement**  
    The primary interface is a fast, predictable CLI. UIs and advanced features come later.
@@ -34,7 +34,7 @@ We are building this in public as open source.
 
 - TypeScript CLI (Node.js)
 - Clean separation: scanner → extractor → bank template → seeder → integration emitters
-- Config lives in `.cortex/` (or equivalent) and is version-controlled
+- Config lives in `.nocciolo/` (or equivalent) and is version-controlled
 - Prefer explicit configuration over magic
 - Every retained fact should carry provenance (source file + optional commit)
 
