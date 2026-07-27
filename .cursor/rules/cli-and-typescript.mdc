@@ -1,0 +1,35 @@
+---
+description: TypeScript CLI conventions for Cortex
+globs: ["**/*.{ts,tsx,js,mjs,cjs}", "package.json", "tsconfig*.json"]
+alwaysApply: false
+---
+
+# CLI & TypeScript Conventions
+
+## CLI design
+
+- Commands should be composable and predictable (`init`, `configure`, `seed`, `status`, `mcp`, etc.)
+- Support both interactive and non-interactive / CI-friendly usage
+- Prefer explicit flags over hidden behavior
+- Include `--dry-run` for any command that mutates state or talks to external systems
+- Help text should be concise and show the happy path first
+
+## TypeScript
+
+- Strict mode preferred
+- Prefer interfaces / types that model the domain clearly (BankTemplate, DurableFact, Provenance, etc.)
+- Avoid deep inheritance; favor composition
+- Keep modules focused — one primary responsibility per file when practical
+- Public CLI surface should be stable; internal modules can evolve faster
+
+## Error handling
+
+- Fail fast with clear messages
+- Tell the user the next concrete action when possible
+- Distinguish between user error (bad config, missing files) and system error
+
+## Testing mindset
+
+- Core extraction and template generation logic should be unit-testable
+- Prefer pure functions for knowledge transformation where possible
+- CLI integration tests can come later; focus on the domain logic first

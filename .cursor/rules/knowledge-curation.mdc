@@ -1,0 +1,45 @@
+---
+description: Rules for knowledge scanning, extraction, and Hindsight bank configuration
+globs: ["**/scanner/**", "**/extract*/**", "**/bank*/**", "**/seed*/**", "**/templates/**", "**/*knowledge*", "**/*hindsight*"]
+alwaysApply: false
+---
+
+# Knowledge Curation & Hindsight Rules
+
+## What counts as durable knowledge
+
+Prefer:
+
+- Architecture Decision Records (ADRs)
+- High-level README sections that describe purpose, constraints, and non-goals
+- Explicit coding standards and project conventions
+- Domain models / invariants
+- Stable API / schema descriptions
+- Documented trade-offs and "why we did it this way"
+
+Deprioritize or ignore:
+
+- Generated files
+- Lockfiles and dependency noise
+- Temporary notes, TODO dumps, or session transcripts
+- Implementation details that change frequently without architectural impact
+
+## Extraction principles
+
+- Be conservative. Missing a fact is better than injecting noise or outdated claims.
+- Preserve provenance (source path + optional git commit / line range).
+- Prefer structured output that maps cleanly to Hindsight concepts (facts, observations, mental models).
+- Do not hallucinate project decisions. Only extract what is present in the source material.
+
+## Bank configuration
+
+- Mission statements should be specific to the project, not generic AI filler.
+- Directives should encode real constraints and preferences (local control, performance, existing patterns, etc.).
+- Extraction mode and chunking should be tuned for technical documentation, not general chat.
+- Single-bank is the default and preferred starting point for most repositories.
+
+## Seeding
+
+- Every retained item should be traceable back to a source.
+- Support incremental / re-seed flows so banks can stay current without full re-ingestion.
+- Make it easy for a human to review what is about to be retained (`--dry-run`).

@@ -1,0 +1,44 @@
+---
+description: Core project rules for Cortex — company brain config for AI agents
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Cortex Core Rules
+
+You are working on **Cortex**, an open-source CLI that turns durable project knowledge into Hindsight memory banks (and later other providers) so AI agents inherit shared context.
+
+## Non-negotiable principles
+
+- Prefer **durable** knowledge over ephemeral content
+- Keep designs **local-first** and self-hostable
+- Amplify existing engineering practices (ADRs, standards, architecture docs) — do not replace them
+- CLI is the primary interface; keep it fast and predictable
+- Hindsight is the first-class target. Other providers must not compromise the Hindsight experience
+
+## Architecture boundaries
+
+Keep these concerns separated:
+
+1. Project scanning / knowledge discovery
+2. Extraction of durable facts & decisions
+3. Bank template / configuration generation
+4. Seeding (retain) into the memory system
+5. Integration emission (MCP, Cursor rules, AGENTS.md snippets, etc.)
+
+Do not collapse these into a single opaque pipeline.
+
+## Working style
+
+- Prefer small, focused changes
+- Update `ROADMAP.md` status when a phase item is completed or significantly changed
+- When adding user-facing commands, support `--dry-run` where it makes sense
+- Errors must be actionable
+- Strong TypeScript typing; avoid `any`
+
+## What to avoid
+
+- Inventing architecture or patterns that contradict project principles
+- Expanding into general multi-agent orchestration or product agent embedding unless explicitly asked
+- Making cloud services the default path
+- Treating every file in a repo as seed-worthy knowledge
