@@ -37,9 +37,10 @@ Agents inherit shared context instead of rediscovering it.
 - **Configures** a Hindsight memory bank with a clear mission, directives, and extraction settings tuned for software projects
 - **Seeds** the bank with high-signal facts and decisions so agents start with real context
 - **Emits** the configs and MCP snippets needed to wire the bank into Cursor, Claude Code, Roo, and other agent harnesses
+- **Shares** knowledgebases across teams with explicit deployment profiles — local/LAN, VPN, or public — so the company brain reaches the agents that need it
 - **Stays local-first** — you control the data and the hosting
 
-Later versions will support additional memory backends, event-driven updates, and richer curation tools.
+Later versions will support additional memory backends, event-driven updates, richer curation tools, and team-wide bank sharing across deployment modes.
 
 ## Quick Start (Coming Soon)
 
@@ -65,7 +66,8 @@ The CLI is under active development. The goal is a zero-to-useful bank in under 
 - **Local control** — self-hostable, version-controlled, no forced cloud dependency
 - **Agent-native** — missions, directives, and structure that map cleanly to how modern memory systems actually work
 - **Traditional craft first** — clear architecture, ADRs, and standards remain the source of truth; Nocciolo amplifies them for agents
-- **Progressive** — start simple (single bank, one project), grow into multi-bank, multi-repo, and event-driven workflows
+- **Progressive** — start simple (single bank, one project), grow into multi-bank, multi-repo, team sharing, and event-driven workflows
+- **Share on your terms** — deploy the bank locally or on a LAN, behind a VPN for private teams, or publicly when the knowledge is meant to be open
 
 ## Status
 

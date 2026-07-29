@@ -42,7 +42,18 @@ High-level phased plan. This is a living document — priorities will shift base
 
 **Goal:** End-to-end path from repo → configured bank → agent that actually uses it.
 
-## Phase 4 — Reliability & Developer Experience
+## Phase 4 — Team Sharing & Deployment Profiles
+
+- [ ] Shareable knowledgebase configs so teams can consume the same bank across machines and harnesses
+- [ ] Deployment profile: **local / LAN** — single machine or trusted network, minimal exposure
+- [ ] Deployment profile: **VPN** — bank reachable only inside a private network for closed teams
+- [ ] Deployment profile: **public** — intentionally exposed hosting when knowledge is meant to be open
+- [ ] Documented security defaults and trade-offs per profile (auth, TLS, network binding)
+- [ ] CLI helpers to generate and validate the chosen profile (`nocciolo share` or equivalent, with `--dry-run`)
+
+**Goal:** A team can publish one durable bank and let agents across the org inherit it — without forcing a single cloud path.
+
+## Phase 5 — Reliability & Developer Experience
 
 - [ ] Status / health commands
 - [ ] Better error messages and recovery paths
@@ -52,7 +63,7 @@ High-level phased plan. This is a living document — priorities will shift base
 
 **Goal:** The tool feels solid enough for daily use on real projects.
 
-## Phase 5 — Advanced & Extensibility
+## Phase 6 — Advanced & Extensibility
 
 - [ ] File watcher / event-driven re-seeding
 - [ ] Multi-provider support (Hindsight first, then others)
@@ -68,6 +79,7 @@ High-level phased plan. This is a living document — priorities will shift base
 ### Guiding Constraints
 
 - Prefer local control and self-hosting
+- Team sharing must remain opt-in and profile-driven (local/LAN, VPN, public) — never a forced cloud default
 - Amplify existing engineering practices (ADRs, standards, clear architecture) rather than replace them
 - Keep the CLI fast and the happy path short
 - Stay focused on knowledgebases and agent context before expanding into broader agent orchestration
