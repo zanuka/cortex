@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "nocciolo",
+  "provider": "hindsight",
+  "bankId": "nocciolo",
+  "root": ".",
+  "createdAt": "2026-08-04T04:55:22.981Z"
+}

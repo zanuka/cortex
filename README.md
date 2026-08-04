@@ -42,23 +42,27 @@ Agents inherit shared context instead of rediscovering it.
 
 Later versions will support additional memory backends, event-driven updates, richer curation tools, and team-wide bank sharing across deployment modes.
 
-## Quick Start (Coming Soon)
+## Quick Start
 
 ```bash
-# From your project root
+# From your project root (once published)
 npx @nocciolo-ai/cli init
 
-# Configure a Hindsight bank for this project
+# Or from this repo while developing
+pnpm install && pnpm build
+node dist/cli.js init
+
+# Configure a Hindsight bank template for this project
 nocciolo configure
 
-# Seed durable knowledge into the bank
-nocciolo seed
+# Preview durable sources that would be retained
+nocciolo seed --dry-run
 
-# Emit MCP / agent config snippets
+# MCP / agent config snippets (stub for now)
 nocciolo mcp
 ```
 
-The CLI is under active development. The goal is a zero-to-useful bank in under five minutes.
+Requires Node.js 20+. The goal is a zero-to-useful bank in under five minutes.
 
 ## Core Principles
 
