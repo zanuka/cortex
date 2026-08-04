@@ -1,0 +1,265 @@
+import { buildSingleBankMcpUrl } from "./mcp-url.js";
+
+export type McpHarness =
+  | "cursor"
+  | "claude-code"
+  | "claude-desktop"
+  | "roo"
+  | "codex"
+  | "kiro";
+
+export const ALL_HARNESSES: readonly McpHarness[] = [
+  "cursor",
+  "claude-code",
+  "claude-desktop",
+  "roo",
+  "codex",
+  "kiro",
+] as const;
+
+export interface McpSnippetInput {
+  baseUrl: string;
+  bankId: string;
+  projectName: string;
+  serverName?: string;
+  includeAuth?: boolean;
+  apiKeyEnvVar?: string;
+  apiKeyLiteral?: string;
+}
+
+export interface McpSnippet {
+  harness: McpHarness;
+  title: string;
+  targetPath: string;
+  format: "json" | "toml" | "shell";
+  body: string;
+  notes: string[];
+}
+
+const DEFAULT_API_KEY_ENV = "NOCCIOLO_HINDSIGHT_API_KEY";
+
+export function parseHarnessList(raw: string | undefined): McpHarness[] {
+  if (!raw || raw.trim() === "" || raw.trim().toLowerCase() === "all") {
+    return [...ALL_HARNESSES];
+  }
+  const parts = raw.split(",").map((p) => p.trim().toLowerCase()).filter(Boolean);
+  const out: McpHarness[] = [];
+  for (const part of parts) {
+    if (!isMcpHarness(part)) {
+      throw new Error(
+        `Unknown harness "${part}". Use: ${ALL_HARNESSES.join(", ")}, or all.`,
+      );
+    }
+    if (!out.includes(part)) {
+      out.push(part);
+    }
+  }
+  return out;
+}
+
+function isMcpHarness(value: string): value is McpHarness {
+  return (ALL_HARNESSES as readonly string[]).includes(value);
+}
+
+export function generateMcpSnippets(input: McpSnippetInput): McpSnippet[] {
+  const mcpUrl = buildSingleBankMcpUrl(input.baseUrl, input.bankId);
+  const serverName = input.serverName ?? "hindsight";
+  const headers = buildHeaders(input);
+  const cursorHeaders = buildCursorHeaders(input);
+
+  return [
+    {
+      harness: "cursor",
+      title: "Cursor",
+      targetPath: ".cursor/mcp.json",
+      format: "json",
+      body: JSON.stringify(
+        {
+          mcpServers: {
+            [serverName]: {
+              url: mcpUrl,
+              ...(cursorHeaders ? { headers: cursorHeaders } : {}),
+            },
+          },
+        },
+        null,
+        2,
+      ),
+      notes: [
+        "Project file: .cursor/mcp.json (merge with existing servers if present).",
+        "Reload MCP servers in Cursor Settings after writing.",
+      ],
+    },
+    {
+      harness: "claude-code",
+      title: "Claude Code",
+      targetPath: "(claude mcp add)",
+      format: "shell",
+      body: buildClaudeCodeCommand(serverName, mcpUrl, headers),
+      notes: [
+        "Runs `claude mcp add` for the current project/user scope.",
+        "Single-bank URL pins tools to this project's bank.",
+      ],
+    },
+    {
+      harness: "claude-desktop",
+      title: "Claude Desktop",
+      targetPath: "~/.claude_desktop_config.json",
+      format: "json",
+      body: JSON.stringify(
+        {
+          mcpServers: {
+            [serverName]: {
+              url: mcpUrl,
+              ...(headers ? { headers } : {}),
+            },
+          },
+        },
+        null,
+        2,
+      ),
+      notes: ["Merge into ~/.claude_desktop_config.json under mcpServers."],
+    },
+    {
+      harness: "roo",
+      title: "Roo Code",
+      targetPath: ".roo/mcp.json",
+      format: "json",
+      body: JSON.stringify(
+        {
+          mcpServers: {
+            [serverName]: {
+              type: "streamable-http",
+              url: mcpUrl,
+              ...(headers ? { headers } : {}),
+            },
+          },
+        },
+        null,
+        2,
+      ),
+      notes: [
+        "Project file: .roo/mcp.json (or Edit Project MCP in Roo).",
+        'Roo requires type: "streamable-http" for remote HTTP MCP.',
+      ],
+    },
+    {
+      harness: "codex",
+      title: "Codex CLI",
+      targetPath: ".codex/config.toml",
+      format: "toml",
+      body: buildCodexToml(serverName, mcpUrl, input),
+      notes: [
+        "Append to ~/.codex/config.toml or project .codex/config.toml.",
+        "Codex uses mcp_servers (underscore) and bearer_token_env_var for auth.",
+      ],
+    },
+    {
+      harness: "kiro",
+      title: "Kiro",
+      targetPath: ".kiro/settings/mcp.json",
+      format: "json",
+      body: JSON.stringify(
+        {
+          mcpServers: {
+            [serverName]: {
+              url: mcpUrl,
+              ...(headers ? { headers } : {}),
+            },
+          },
+        },
+        null,
+        2,
+      ),
+      notes: [
+        "Workspace: .kiro/settings/mcp.json — or ~/.kiro/settings/mcp.json.",
+      ],
+    },
+  ];
+}
+
+function buildHeaders(
+  input: McpSnippetInput,
+): Record<string, string> | undefined {
+  if (!input.includeAuth) {
+    return undefined;
+  }
+  const envVar = input.apiKeyEnvVar ?? DEFAULT_API_KEY_ENV;
+  const value =
+    input.apiKeyLiteral !== undefined
+      ? `Bearer ${input.apiKeyLiteral}`
+      : `Bearer \${${envVar}}`;
+  return { Authorization: value };
+}
+
+function buildCursorHeaders(
+  input: McpSnippetInput,
+): Record<string, string> | undefined {
+  if (!input.includeAuth) {
+    return undefined;
+  }
+  const envVar = input.apiKeyEnvVar ?? DEFAULT_API_KEY_ENV;
+  const value =
+    input.apiKeyLiteral !== undefined
+      ? `Bearer ${input.apiKeyLiteral}`
+      : `Bearer \${env:${envVar}}`;
+  return { Authorization: value };
+}
+
+function buildClaudeCodeCommand(
+  serverName: string,
+  mcpUrl: string,
+  headers: Record<string, string> | undefined,
+): string {
+  const parts = [
+    "claude",
+    "mcp",
+    "add",
+    "--transport",
+    "http",
+    serverName,
+    mcpUrl,
+  ];
+  if (headers) {
+    for (const [key, value] of Object.entries(headers)) {
+      parts.push("--header", `"${key}: ${value}"`);
+    }
+  }
+  return parts.join(" ");
+}
+
+function buildCodexToml(
+  serverName: string,
+  mcpUrl: string,
+  input: McpSnippetInput,
+): string {
+  const lines = [
+    `[mcp_servers.${serverName}]`,
+    `url = "${mcpUrl}"`,
+  ];
+  if (input.includeAuth) {
+    const envVar = input.apiKeyEnvVar ?? DEFAULT_API_KEY_ENV;
+    if (input.apiKeyLiteral !== undefined) {
+      lines.push(
+        `http_headers = { Authorization = "Bearer ${escapeToml(
+          input.apiKeyLiteral,
+        )}" }`,
+      );
+    } else {
+      lines.push(`bearer_token_env_var = "${envVar}"`);
+    }
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+function escapeToml(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+export function filterSnippets(
+  snippets: McpSnippet[],
+  harnesses: McpHarness[],
+): McpSnippet[] {
+  const set = new Set(harnesses);
+  return snippets.filter((s) => set.has(s.harness));
+}

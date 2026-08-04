@@ -25,8 +25,10 @@ Put logic in the matching layer — do not collapse stages into `commands/` or a
 | Heuristic candidates + provenance | `src/extractor/` |
 | Prepare retain + seed manifest | `src/seeder/` |
 | Hindsight template + HTTP retain | `src/providers/hindsight/` |
+| MCP snippets + AGENTS / Cursor rules | `src/integration/` |
+| Local Hindsight Docker helper | `src/docker/` |
 
-Commands may call modules; modules must not depend on Commander.
+Commands may call modules; modules must not depend on Commander. Integration emission must stay separate from scan / extract / seed.
 
 ## Happy path invariants
 
@@ -34,6 +36,8 @@ Commands may call modules; modules must not depend on Commander.
 - `seed --dry-run` previews candidates; it must not call Hindsight
 - Live `seed` uses stable `document_id`s and writes incremental state only under `.nocciolo/local/` (gitignored)
 - Version-controlled config stays under `.nocciolo/` (`config.json`, `hindsight/bank-template.json`); never commit API keys
+- `init` prompts for bank id + Docker container name in a TTY (flags/`--yes` skip prompts); bank id is not the Docker container name
+- Docker container/volume: CLI `--name` → `config.docker` → defaults `hindsight` / `hindsight-data`
 
 ## Hindsight connection
 

@@ -14,7 +14,7 @@ High-level phased plan. This is a living document — priorities will shift base
 
 ## Phase 1 — Core CLI + Hindsight Bank Config
 
-- [x] `nocciolo init` — detect project root, scaffold `.nocciolo/` config
+- [x] `nocciolo init` — detect project root, scaffold `.nocciolo/` config (interactive bank id + Docker container name; flags/`--yes` for non-interactive)
 - [x] Bank template generation for Hindsight (mission, directives, extraction settings)
 - [x] Sensible defaults for typical full-stack / web projects
 - [x] `nocciolo configure` — non-interactive bank setup with `--dry-run` (interactive prompts later)
@@ -36,11 +36,11 @@ High-level phased plan. This is a living document — priorities will shift base
 
 ## Phase 3 — Local Hosting & Agent Integration
 
-- [ ] Docker / local Hindsight helper (`nocciolo docker` or equivalent)
-- [ ] MCP endpoint generation for Cursor, Claude Code, Roo, Codex, etc.
-- [ ] `nocciolo mcp` — emit ready-to-paste configs and rules
-- [ ] Optional updates to `AGENTS.md` / Cursor rules that tell agents to prefer the project bank
-- [ ] Single-bank focus (multi-bank later)
+- [x] Docker / local Hindsight helper (`nocciolo docker` or equivalent)
+- [x] MCP endpoint generation for Cursor, Kiro, Claude Code, Roo, Codex, etc.
+- [x] `nocciolo mcp` — emit ready-to-paste configs and rules
+- [x] Optional updates to `AGENTS.md` / Cursor rules that tell agents to prefer the project bank
+- [x] Single-bank focus (multi-bank later)
 
 **Goal:** End-to-end path from repo → configured bank → agent that actually uses it.
 

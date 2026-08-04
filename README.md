@@ -46,19 +46,26 @@ Later versions will support additional memory backends, event-driven updates, ri
 
 ```bash
 # Once published
-npx @nocciolo-ai/cli init              # scaffold .nocciolo/ config
+npx @nocciolo-ai/cli init              # scaffold .nocciolo/ (prompts for bank id + Docker container)
 npx @nocciolo-ai/cli configure         # generate Hindsight bank template
+npx @nocciolo-ai/cli docker print      # local Hindsight docker command
 npx @nocciolo-ai/cli seed --dry-run    # preview candidates (no API calls)
 npx @nocciolo-ai/cli seed              # retain (no auth)
+npx @nocciolo-ai/cli mcp               # print MCP snippets (see mcp options below)
+npx @nocciolo-ai/cli mcp --write --write-agents --write-cursor-rules --include-auth
 
 # Developing this repo
 pnpm install && pnpm build             # install deps and build the CLI
-pnpm nocciolo init                     # scaffold .nocciolo/ config
+pnpm nocciolo init                     # scaffold .nocciolo/ (prompts for bank id + Docker container)
 pnpm nocciolo configure                # generate Hindsight bank template
 pnpm nocciolo seed --dry-run           # preview candidates (no API calls)
 pnpm nocciolo seed                     # retain (no auth)
+pnpm nocciolo docker print             # local Hindsight docker command
+pnpm nocciolo mcp                      # print MCP snippets
+pnpm nocciolo mcp --write --write-agents --write-cursor-rules --include-auth --dry-run
 ```
 
+`init` asks for a **bank id** (project-specific) and a **Docker container name** (shared Hindsight server — one container can host many banks). Non-interactive: `--bank-id`, `--container-name`, and `--yes`. Defaults: slug of the project directory for the bank id; container `hindsight`.
 When your Hindsight bank requires auth (typical for Docker with `HINDSIGHT_API_TENANT_API_KEY`), pass the **same secret value** into Nocciolo on live `seed` only — `--dry-run`, `init`, and `configure` do not need it:
 
 ```bash
@@ -75,8 +82,8 @@ pnpm nocciolo seed
 # Or pass the flag
 pnpm nocciolo seed --api-key 'your-actual-key'
 
-# Optional: read the key from a running Hindsight container
-NOCCIOLO_HINDSIGHT_API_KEY="$(docker exec suchconfig-hindsight printenv HINDSIGHT_API_TENANT_API_KEY)" \
+# Optional: read the key from a running Hindsight container (name from init / config; default hindsight)
+NOCCIOLO_HINDSIGHT_API_KEY="$(docker exec hindsight printenv HINDSIGHT_API_TENANT_API_KEY)" \
   pnpm nocciolo seed
 ```
 
@@ -155,10 +162,55 @@ Here is the Nocciolo bank’s world-facts constellation in Hindsight after a `se
 
 More detail: [developer workflow](./docs/dev-workflow.md).
 
+## Local Hindsight & agent wiring
+
+```bash
+pnpm nocciolo docker print             # print docker run (no execute)
+pnpm nocciolo docker up                # start local Hindsight (needs Docker + LLM key)
+pnpm nocciolo docker status
+pnpm nocciolo docker down
+
+pnpm nocciolo mcp                      # print snippets for all harnesses
+pnpm nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
+```
+
+Single-bank MCP URL shape: `http://localhost:8888/mcp/<bankId>/`. LLM key for Docker: `--llm-api-key` or `OPENAI_API_KEY` / `HINDSIGHT_API_LLM_API_KEY`. Tenant auth on the container: `--api-key` (same value as `NOCCIOLO_HINDSIGHT_API_KEY` for seed/MCP).
+
+### `nocciolo mcp` options
+
+By default `mcp` **prints** ready-to-paste configs. It does not detect your IDE — use write flags for the files you want.
+
+| Flag | What it does |
+|------|----------------|
+| *(none)* | Print snippets for Cursor, Claude Code, Claude Desktop, Roo, Codex, and Kiro |
+| `--harness <list>` | Limit output: `cursor`, `claude-code`, `claude-desktop`, `roo`, `codex`, `kiro`, or `all` (comma-separated) |
+| `--write` | Write/merge project `.cursor/mcp.json` |
+| `--write-roo` | Write/merge project `.roo/mcp.json` (`type: streamable-http`) |
+| `--write-kiro` | Write/merge project `.kiro/settings/mcp.json` |
+| `--write-agents` | Upsert an `AGENTS.md` section telling agents to prefer the project bank |
+| `--write-cursor-rules` | Write `.cursor/rules/hindsight-bank.mdc` (`alwaysApply: true`) |
+| `--dry-run` | Preview writes without touching the filesystem (requires at least one `--write*` flag) |
+| `--force` | Overwrite an existing `hindsight` MCP entry or Cursor rule file |
+| `--hindsight-url <url>` | Override Hindsight base URL for the MCP endpoint |
+| `--include-auth` | Add `Authorization` headers; written files use env placeholders (`${env:NOCCIOLO_HINDSIGHT_API_KEY}` for Cursor) |
+| `--api-key <key>` | Include this key **literally** in printed snippets only; file writes still use env placeholders |
+
+Examples:
+
+```bash
+pnpm nocciolo mcp --harness cursor,claude-code
+pnpm nocciolo mcp --write --dry-run
+pnpm nocciolo mcp --write --include-auth
+pnpm nocciolo mcp --write-roo --write-kiro --dry-run
+pnpm nocciolo mcp --write --write-agents --write-cursor-rules --force
+pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
+```
+
 ## Docs
 
 - [CLI architecture](./docs/cli-architecture.md) — module boundaries, seed pipeline, config, and env/auth for contributors
 - [Developer workflow](./docs/dev-workflow.md) — build, first seed, re-seed, and Hindsight retain/consolidation tips
+- [Developer testing](./docs/dev-testing.md) — end-user command sequence and E2E regression checklist
 - [Sensitive data](./docs/sensitive-data.md) — allowlist/denylist decisions so secrets never get retained
 
 ## Core Principles

@@ -4,5 +4,9 @@
   "provider": "hindsight",
   "bankId": "nocciolo",
   "root": ".",
-  "createdAt": "2026-08-04T04:55:22.981Z"
+  "createdAt": "2026-08-04T04:55:22.981Z",
+  "docker": {
+    "containerName": "hindsight",
+    "volumeName": "hindsight-data"
+  }
 }

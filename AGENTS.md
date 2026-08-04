@@ -68,4 +68,17 @@ We are building this in public as open source.
 
 ## Current Focus
 
-See `ROADMAP.md`. At the time of writing we are in early foundation + Phase 1 (Core CLI + Hindsight bank config).
+See `ROADMAP.md`. Phase 3 (local Docker helper + MCP / agent integration emission) is in place; next is team sharing & deployment profiles (Phase 4) and reliability/DX (Phase 5).
+
+<!-- nocciolo:hindsight-bank -->
+
+## Project memory bank (Hindsight)
+
+Prefer the project Hindsight bank `nocciolo` for durable nocciolo context (architecture, decisions, standards, domain invariants).
+
+- Recall via the Hindsight MCP tools (`recall`, `reflect`) before rediscovering the same facts from scattered docs.
+- MCP endpoint (single-bank): `http://localhost:8888/mcp/nocciolo/`
+- Treat repo docs and ADRs as source of truth; use the bank as the agent-facing memory of those sources.
+- Do not dump secrets, credentials, or ephemeral chat into the bank.
+
+<!-- /nocciolo:hindsight-bank -->

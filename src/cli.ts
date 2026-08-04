@@ -3,8 +3,13 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runConfigure, printConfigureResult } from "./commands/configure.js";
+import {
+  parseDockerAction,
+  printDockerResult,
+  runDockerHelper,
+} from "./commands/docker.js";
 import { printInitResult, runInit } from "./commands/init.js";
-import { runMcp } from "./commands/mcp.js";
+import { printMcpResult, runMcp } from "./commands/mcp.js";
 import { runSeedCommand } from "./commands/seed.js";
 import { formatError } from "./utils/errors.js";
 
@@ -36,14 +41,37 @@ async function main(): Promise<void> {
     .option("--dry-run", "Show what would be written without creating files")
     .option("--force", "Overwrite an existing .nocciolo/config.json")
     .option("--name <name>", "Project name (defaults to directory name)")
-    .action(async (opts: { dryRun?: boolean; force?: boolean; name?: string }) => {
-      const result = await runInit({
-        dryRun: Boolean(opts.dryRun),
-        force: Boolean(opts.force),
-        ...(opts.name !== undefined ? { name: opts.name } : {}),
-      });
-      printInitResult(result);
-    });
+    .option(
+      "--bank-id <id>",
+      "Hindsight bank id (defaults to a slug of the project name)",
+    )
+    .option(
+      "--container-name <name>",
+      "Local Hindsight Docker container name (default: hindsight; shared across banks)",
+    )
+    .option("-y, --yes", "Accept defaults without interactive prompts")
+    .action(
+      async (opts: {
+        dryRun?: boolean;
+        force?: boolean;
+        name?: string;
+        bankId?: string;
+        containerName?: string;
+        yes?: boolean;
+      }) => {
+        const result = await runInit({
+          dryRun: Boolean(opts.dryRun),
+          force: Boolean(opts.force),
+          yes: Boolean(opts.yes),
+          ...(opts.name !== undefined ? { name: opts.name } : {}),
+          ...(opts.bankId !== undefined ? { bankId: opts.bankId } : {}),
+          ...(opts.containerName !== undefined
+            ? { containerName: opts.containerName }
+            : {}),
+        });
+        printInitResult(result);
+      },
+    );
 
   program
     .command("configure")
@@ -98,9 +126,142 @@ async function main(): Promise<void> {
   program
     .command("mcp")
     .description("Emit MCP / agent config snippets for the project bank")
-    .action(async () => {
-      await runMcp();
-    });
+    .option(
+      "--harness <list>",
+      "Comma-separated harnesses: cursor,claude-code,claude-desktop,roo,codex,kiro,all",
+    )
+    .option("--write", "Write/merge .cursor/mcp.json for the project bank")
+    .option("--write-roo", "Write/merge .roo/mcp.json")
+    .option("--write-kiro", "Write/merge .kiro/settings/mcp.json")
+    .option(
+      "--write-agents",
+      "Upsert an AGENTS.md section telling agents to prefer the project bank",
+    )
+    .option(
+      "--write-cursor-rules",
+      "Write .cursor/rules/hindsight-bank.mdc (alwaysApply)",
+    )
+    .option("--dry-run", "Preview file writes without mutating the filesystem")
+    .option("--force", "Overwrite existing MCP server entry / Cursor rule")
+    .option(
+      "--hindsight-url <url>",
+      "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+    )
+    .option(
+      "--include-auth",
+      "Include Authorization headers (env placeholders when writing files)",
+    )
+    .option(
+      "--api-key <key>",
+      "Include this API key literally in printed snippets (writes still use env placeholders)",
+    )
+    .action(
+      async (opts: {
+        harness?: string;
+        write?: boolean;
+        writeRoo?: boolean;
+        writeKiro?: boolean;
+        writeAgents?: boolean;
+        writeCursorRules?: boolean;
+        dryRun?: boolean;
+        force?: boolean;
+        hindsightUrl?: string;
+        includeAuth?: boolean;
+        apiKey?: string;
+      }) => {
+        const result = await runMcp({
+          dryRun: Boolean(opts.dryRun),
+          force: Boolean(opts.force),
+          write: Boolean(opts.write),
+          writeRoo: Boolean(opts.writeRoo),
+          writeKiro: Boolean(opts.writeKiro),
+          writeAgents: Boolean(opts.writeAgents),
+          writeCursorRules: Boolean(opts.writeCursorRules),
+          includeAuth: Boolean(opts.includeAuth),
+          ...(opts.harness !== undefined ? { harness: opts.harness } : {}),
+          ...(opts.hindsightUrl !== undefined
+            ? { hindsightUrl: opts.hindsightUrl }
+            : {}),
+          ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
+        });
+        printMcpResult(result);
+      },
+    );
+
+  program
+    .command("docker")
+    .description("Local Hindsight Docker helper (up / down / status / print)")
+    .argument(
+      "[action]",
+      "up|start, down|stop, status, or print (default: print)",
+      "print",
+    )
+    .option("--dry-run", "Print the docker command without executing")
+    .option(
+      "--name <name>",
+      "Container name (default: config docker.containerName, or hindsight)",
+    )
+    .option("--api-port <port>", "Host port for Hindsight API (default: 8888)")
+    .option("--ui-port <port>", "Host port for Control Plane UI (default: 9999)")
+    .option(
+      "--image <image>",
+      "Docker image (default: ghcr.io/vectorize-io/hindsight:latest)",
+    )
+    .option(
+      "--llm-api-key <key>",
+      "LLM provider API key (or OPENAI_API_KEY / HINDSIGHT_API_LLM_API_KEY)",
+    )
+    .option(
+      "--llm-provider <name>",
+      "HINDSIGHT_API_LLM_PROVIDER (openai, anthropic, ollama, …)",
+    )
+    .option(
+      "--api-key <key>",
+      "Enable tenant API auth on the container (HINDSIGHT_API_TENANT_API_KEY)",
+    )
+    .option("--no-pull", "Do not pass --pull always")
+    .option("--no-detach", "Run attached (-it) instead of -d")
+    .action(
+      async (
+        actionArg: string,
+        opts: {
+          dryRun?: boolean;
+          name?: string;
+          apiPort?: string;
+          uiPort?: string;
+          image?: string;
+          llmApiKey?: string;
+          llmProvider?: string;
+          apiKey?: string;
+          pull?: boolean;
+          detach?: boolean;
+        },
+      ) => {
+        const action = parseDockerAction(actionArg);
+        const result = await runDockerHelper({
+          action,
+          dryRun: Boolean(opts.dryRun) || action === "print",
+          pull: opts.pull !== false,
+          detach: opts.detach !== false,
+          ...(opts.name !== undefined ? { containerName: opts.name } : {}),
+          ...(opts.apiPort !== undefined
+            ? { apiPort: Number(opts.apiPort) }
+            : {}),
+          ...(opts.uiPort !== undefined
+            ? { uiPort: Number(opts.uiPort) }
+            : {}),
+          ...(opts.image !== undefined ? { image: opts.image } : {}),
+          ...(opts.llmApiKey !== undefined
+            ? { llmApiKey: opts.llmApiKey }
+            : {}),
+          ...(opts.llmProvider !== undefined
+            ? { llmProvider: opts.llmProvider }
+            : {}),
+          ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
+        });
+        printDockerResult(result);
+      },
+    );
 
   await program.parseAsync(process.argv);
 }
