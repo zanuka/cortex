@@ -180,7 +180,11 @@ See [ROADMAP.md](./ROADMAP.md) for the high-level phased plan.
 
 Issues, ideas, and PRs are welcome once the foundation lands. For now the best way to help is feedback on the vision and the initial CLI surface.
 
+## Author
+
+Created by [zanuka](https://github.com/zanuka) (Michael Delucchi)
+
 ## License
 
-MIT
+Copyright © 2026 Michael Delucchi. Released under the [MIT License](LICENSE).
 
