@@ -4,15 +4,17 @@
   "description": "Company brain config for AI agents — seed Hindsight memory banks from durable project knowledge",
   "type": "module",
   "bin": {
-    "nocciolo": "./dist/cli.js"
+    "nocciolo": "./bin/nocciolo.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "start": "node dist/cli.js",
+    "start": "node bin/nocciolo.js",
+    "nocciolo": "node bin/nocciolo.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

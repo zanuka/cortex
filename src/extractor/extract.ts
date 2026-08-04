@@ -1,0 +1,267 @@
+import type { DurableSource } from "../scanner/durable-sources.js";
+import { hashContent, slugifyHeading } from "./hash.js";
+import type {
+  CandidateFact,
+  ExtractedSource,
+  KnowledgeKind,
+} from "./types.js";
+
+const SIGNAL_PATTERNS: Array<{
+  pattern: RegExp;
+  kind: KnowledgeKind;
+  weight: number;
+}> = [
+  {
+    pattern: /\b(adr|decision|decided|trade-?off|rationale|we chose|why we)\b/i,
+    kind: "decision",
+    weight: 5,
+  },
+  {
+    pattern:
+      /\b(architecture|boundary|boundaries|module|system design|component)\b/i,
+    kind: "architecture",
+    weight: 4,
+  },
+  {
+    pattern:
+      /\b(standard|convention|must|should|principle|guideline|coding)\b/i,
+    kind: "standard",
+    weight: 4,
+  },
+  {
+    pattern:
+      /\b(domain|invariant|constraint|non-negotiable|business rule)\b/i,
+    kind: "domain",
+    weight: 4,
+  },
+  {
+    pattern: /\b(goal|purpose|vision|mission|problem|overview)\b/i,
+    kind: "overview",
+    weight: 2,
+  },
+];
+
+const NOISE_HEADINGS =
+  /^(changelog|license|install(ation)?|getting started|quick start|contributing|table of contents|toc|status|security)\b/i;
+
+const MIN_SECTION_CHARS = 40;
+const MAX_FACT_CHARS = 12_000;
+
+export interface ExtractOptions {
+  commit?: string;
+}
+
+export function extractFromSource(
+  source: DurableSource,
+  content: string,
+  options: ExtractOptions = {},
+): ExtractedSource {
+  const contentHash = hashContent(content);
+  const trimmed = content.trim();
+
+  if (!trimmed) {
+    return {
+      relativePath: source.relativePath,
+      contentHash,
+      facts: [],
+      skipped: true,
+      skipReason: "empty file",
+    };
+  }
+
+  if (source.kind === "adr" || source.kind === "agents") {
+    const fact = buildFact({
+      source,
+      title: firstHeading(trimmed) ?? source.relativePath,
+      body: trimmed,
+      knowledgeKind: source.kind === "adr" ? "decision" : "agents",
+      score: source.kind === "adr" ? 10 : 8,
+      sectionSlug: "document",
+      ...(options.commit !== undefined ? { commit: options.commit } : {}),
+    });
+    return {
+      relativePath: source.relativePath,
+      contentHash,
+      facts: fact ? [fact] : [],
+      skipped: !fact,
+      ...(fact ? {} : { skipReason: "content below minimum signal" }),
+    };
+  }
+
+  const sections = splitMarkdownSections(trimmed);
+  const facts: CandidateFact[] = [];
+
+  for (const [index, section] of sections.entries()) {
+    const scored = scoreSection(
+      section.heading,
+      section.body,
+      source.kind,
+      index === 0,
+    );
+    if (!scored) {
+      continue;
+    }
+    const fact = buildFact({
+      source,
+      title: section.heading || source.relativePath,
+      body: section.body,
+      knowledgeKind: scored.kind,
+      score: scored.score,
+      sectionSlug: slugifyHeading(section.heading || "body"),
+      ...(options.commit !== undefined ? { commit: options.commit } : {}),
+    });
+    if (fact) {
+      facts.push(fact);
+    }
+  }
+
+  facts.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+
+  return {
+    relativePath: source.relativePath,
+    contentHash,
+    facts,
+    skipped: facts.length === 0,
+    ...(facts.length === 0
+      ? { skipReason: "no high-signal sections matched heuristics" }
+      : {}),
+  };
+}
+
+interface Section {
+  heading: string;
+  body: string;
+}
+
+function splitMarkdownSections(content: string): Section[] {
+  const lines = content.split(/\r?\n/);
+  const sections: Section[] = [];
+  let heading = "";
+  let bodyLines: string[] = [];
+  let inFence = false;
+
+  const flush = (): void => {
+    const body = bodyLines.join("\n").trim();
+    if (!heading && !body) {
+      return;
+    }
+    sections.push({
+      heading,
+      body: heading ? `# ${heading}\n\n${body}` : body,
+    });
+    heading = "";
+    bodyLines = [];
+  };
+
+  for (const line of lines) {
+    if (/^```/.test(line)) {
+      inFence = !inFence;
+      bodyLines.push(line);
+      continue;
+    }
+    if (!inFence) {
+      const match = /^(#{1,3})\s+(.+)$/.exec(line);
+      if (match?.[2]) {
+        flush();
+        heading = match[2].trim();
+        continue;
+      }
+    }
+    bodyLines.push(line);
+  }
+  flush();
+
+  return sections.length > 0 ? sections : [{ heading: "", body: content }];
+}
+
+function scoreSection(
+  heading: string,
+  body: string,
+  sourceKind: DurableSource["kind"],
+  isFirst: boolean,
+): { kind: KnowledgeKind; score: number } | undefined {
+  const text = `${heading}\n${body}`;
+  if (text.trim().length < MIN_SECTION_CHARS) {
+    return undefined;
+  }
+
+  if (NOISE_HEADINGS.test(heading.trim())) {
+    return undefined;
+  }
+
+  let bestKind: KnowledgeKind = sourceKind === "readme" ? "overview" : "other";
+  let score = sourceKind === "docs" ? 1 : sourceKind === "readme" ? 1 : 0;
+
+  for (const signal of SIGNAL_PATTERNS) {
+    if (signal.pattern.test(text)) {
+      score += signal.weight;
+      if (signal.weight >= 4) {
+        bestKind = signal.kind;
+      } else if (bestKind === "other" || bestKind === "overview") {
+        bestKind = signal.kind;
+      }
+    }
+  }
+
+  if (sourceKind === "readme" && isFirst) {
+    score += 3;
+    bestKind = "overview";
+  }
+
+  const minScore = sourceKind === "readme" ? 3 : 3;
+  if (score < minScore) {
+    return undefined;
+  }
+
+  return { kind: bestKind, score };
+}
+
+function buildFact(input: {
+  source: DurableSource;
+  title: string;
+  body: string;
+  knowledgeKind: KnowledgeKind;
+  score: number;
+  commit?: string;
+  sectionSlug: string;
+}): CandidateFact | undefined {
+  const content = input.body.trim().slice(0, MAX_FACT_CHARS);
+  if (content.length < MIN_SECTION_CHARS) {
+    return undefined;
+  }
+
+  const provenance: CandidateFact["provenance"] = {
+    sourcePath: input.source.relativePath,
+    kind: input.source.kind,
+  };
+  if (input.commit !== undefined) {
+    provenance.commit = input.commit;
+  }
+
+  return {
+    id: `nocciolo:${input.source.relativePath}#${input.sectionSlug}`,
+    title: input.title.slice(0, 160),
+    content,
+    knowledgeKind: input.knowledgeKind,
+    score: input.score,
+    provenance,
+  };
+}
+
+function firstHeading(content: string): string | undefined {
+  let inFence = false;
+  for (const line of content.split(/\r?\n/)) {
+    if (/^```/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) {
+      continue;
+    }
+    const match = /^#{1,3}\s+(.+)$/.exec(line);
+    if (match?.[1]) {
+      return match[1].trim();
+    }
+  }
+  return undefined;
+}

@@ -2,10 +2,10 @@ import { Command } from "commander";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { printConfigureResult, runConfigure } from "./commands/configure.js";
+import { runConfigure, printConfigureResult } from "./commands/configure.js";
 import { printInitResult, runInit } from "./commands/init.js";
 import { runMcp } from "./commands/mcp.js";
-import { printSeedResult, runSeed } from "./commands/seed.js";
+import { runSeedCommand } from "./commands/seed.js";
 import { formatError } from "./utils/errors.js";
 
 function readPackageVersion(): string {
@@ -63,14 +63,37 @@ async function main(): Promise<void> {
     .description("Retain durable knowledge into the configured bank")
     .option(
       "--dry-run",
-      "Preview which durable sources would be retained (required for now)",
+      "Preview extracted candidates without calling Hindsight",
     )
-    .action(async (opts: { dryRun?: boolean }) => {
-      const result = await runSeed({
-        dryRun: Boolean(opts.dryRun),
-      });
-      printSeedResult(result);
-    });
+    .option("--force", "Re-seed even when source content is unchanged")
+    .option(
+      "--hindsight-url <url>",
+      "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+    )
+    .option(
+      "--api-key <key>",
+      "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+    )
+    .option("--async", "Submit retain asynchronously to Hindsight")
+    .action(
+      async (opts: {
+        dryRun?: boolean;
+        force?: boolean;
+        hindsightUrl?: string;
+        apiKey?: string;
+        async?: boolean;
+      }) => {
+        await runSeedCommand({
+          dryRun: Boolean(opts.dryRun),
+          force: Boolean(opts.force),
+          async: Boolean(opts.async),
+          ...(opts.hindsightUrl !== undefined
+            ? { hindsightUrl: opts.hindsightUrl }
+            : {}),
+          ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
+        });
+      },
+    );
 
   program
     .command("mcp")

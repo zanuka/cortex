@@ -25,11 +25,12 @@ High-level phased plan. This is a living document — priorities will shift base
 ## Phase 2 — Knowledge Curation & Seeding
 
 - [x] Project scanner for durable sources (README, `/docs`, ADRs, AGENTS.md) — conservative first pass
-- [ ] Extraction heuristics that prefer decisions, invariants, and architecture over ephemeral content
-- [x] `nocciolo seed --dry-run` — preview durable sources (live retain into Hindsight still pending)
-- [ ] `nocciolo seed` — retain high-signal knowledge into the configured bank with provenance
-- [ ] Incremental / re-seed support
-- [ ] Simple provenance tracking (source file + commit)
+- [x] Extraction heuristics that prefer decisions, invariants, and architecture over ephemeral content
+- [x] `nocciolo seed --dry-run` — preview extracted candidates with provenance
+- [x] `nocciolo seed` — retain high-signal knowledge into the configured Hindsight bank
+- [x] Seed progress reporting — do-not-interrupt warning + `[i/N]` percent during sync retain; optional `--async` operation polling
+- [x] Incremental / re-seed support (content-hash manifest under `.nocciolo/local/`)
+- [x] Simple provenance tracking (source file + commit)
 
 **Goal:** Agents start sessions with real project context instead of an empty bank.
 

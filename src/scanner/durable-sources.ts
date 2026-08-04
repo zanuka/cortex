@@ -1,6 +1,10 @@
 import { readdir, stat } from "node:fs/promises";
 import { basename, join, relative } from "node:path";
 import { pathExists } from "../utils/fs.js";
+import {
+  isSensitiveRelativePath,
+  isSkippableTraversalDirectory,
+} from "./sensitive.js";
 
 export interface DurableSource {
   absolutePath: string;
@@ -34,6 +38,9 @@ export async function findDurableSources(
       return;
     }
     const relativePath = relative(projectRoot, absolutePath);
+    if (isSensitiveRelativePath(relativePath)) {
+      return;
+    }
     if (seen.has(relativePath)) {
       return;
     }
@@ -46,11 +53,23 @@ export async function findDurableSources(
   }
 
   for (const dir of DOC_DIRS) {
-    await collectMarkdown(join(projectRoot, dir), projectRoot, "docs", found, seen);
+    await collectMarkdown(
+      join(projectRoot, dir),
+      projectRoot,
+      "docs",
+      found,
+      seen,
+    );
   }
 
   for (const dir of ADR_DIRS) {
-    await collectMarkdown(join(projectRoot, dir), projectRoot, "adr", found, seen);
+    await collectMarkdown(
+      join(projectRoot, dir),
+      projectRoot,
+      "adr",
+      found,
+      seen,
+    );
   }
 
   const rootEntries = await safeReaddir(projectRoot);
@@ -87,7 +106,7 @@ async function collectMarkdown(
   for (const entry of entries) {
     const absolutePath = join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name.startsWith(".") || entry.name === "node_modules") {
+      if (isSkippableTraversalDirectory(entry.name)) {
         continue;
       }
       await collectMarkdown(absolutePath, projectRoot, kind, found, seen);
@@ -101,6 +120,9 @@ async function collectMarkdown(
       continue;
     }
     const relativePath = relative(projectRoot, absolutePath);
+    if (isSensitiveRelativePath(relativePath)) {
+      continue;
+    }
     if (seen.has(relativePath)) {
       continue;
     }

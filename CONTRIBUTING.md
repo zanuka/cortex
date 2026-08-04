@@ -5,8 +5,10 @@ Thanks for your interest in contributing. Nocciolo is being developed in public 
 ## Getting Started
 
 1. Read the [README](./README.md) and [ROADMAP](./ROADMAP.md) to understand the current focus.
-2. Review [AGENTS.md](./AGENTS.md) — it contains the project principles that apply to both human and AI contributors.
-3. Look at open issues. Early-stage issues are the best place to start.
+2. Read [docs/cli-architecture.md](./docs/cli-architecture.md) for CLI module boundaries, seed pipeline, and env/auth details.
+3. Follow [docs/dev-workflow.md](./docs/dev-workflow.md) for the day-to-day build → seed → Hindsight loop.
+4. Review [AGENTS.md](./AGENTS.md) — it contains the project principles that apply to both human and AI contributors.
+5. Look at open issues. Early-stage issues are the best place to start.
 
 ## Development Setup
 
@@ -16,10 +18,12 @@ cd nocciolo
 pnpm install
 pnpm build
 pnpm test
-node dist/cli.js --help
+pnpm nocciolo --help
 ```
 
-Useful scripts: `pnpm build`, `pnpm test`, `pnpm typecheck`, `pnpm start -- <command>`.
+Useful scripts: `pnpm build`, `pnpm test`, `pnpm typecheck`, `pnpm nocciolo <command>`.
+
+To use bare `nocciolo` on your PATH while developing: `pnpm link --global` (after `pnpm build`).
 
 ## How to Contribute
 

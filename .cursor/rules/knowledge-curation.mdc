@@ -23,6 +23,7 @@ Deprioritize or ignore:
 - Lockfiles and dependency noise
 - Temporary notes, TODO dumps, or session transcripts
 - Implementation details that change frequently without architectural impact
+- Secrets and sensitive config: `.env*`, credentials, private keys, `secrets/` / `credentials/` trees, API-key docs
 
 ## Extraction principles
 
@@ -43,3 +44,4 @@ Deprioritize or ignore:
 - Every retained item should be traceable back to a source.
 - Support incremental / re-seed flows so banks can stay current without full re-ingestion.
 - Make it easy for a human to review what is about to be retained (`--dry-run`).
+- Never retain secrets: scanner must deny `.env`, keys, credential files, and sensitive doc paths before extract/seed.
