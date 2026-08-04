@@ -45,24 +45,121 @@ Later versions will support additional memory backends, event-driven updates, ri
 ## Quick Start
 
 ```bash
-# From your project root (once published)
-npx @nocciolo-ai/cli init
+# Once published
+npx @nocciolo-ai/cli init              # scaffold .nocciolo/ config
+npx @nocciolo-ai/cli configure         # generate Hindsight bank template
+npx @nocciolo-ai/cli seed --dry-run    # preview candidates (no API calls)
+npx @nocciolo-ai/cli seed              # retain (no auth)
 
-# Or from this repo while developing
-pnpm install && pnpm build
-node dist/cli.js init
-
-# Configure a Hindsight bank template for this project
-nocciolo configure
-
-# Preview durable sources that would be retained
-nocciolo seed --dry-run
-
-# MCP / agent config snippets (stub for now)
-nocciolo mcp
+# Developing this repo
+pnpm install && pnpm build             # install deps and build the CLI
+pnpm nocciolo init                     # scaffold .nocciolo/ config
+pnpm nocciolo configure                # generate Hindsight bank template
+pnpm nocciolo seed --dry-run           # preview candidates (no API calls)
+pnpm nocciolo seed                     # retain (no auth)
 ```
 
-Requires Node.js 20+. The goal is a zero-to-useful bank in under five minutes.
+When your Hindsight bank requires auth (typical for Docker with `HINDSIGHT_API_TENANT_API_KEY`), pass the **same secret value** into Nocciolo on live `seed` only — `--dry-run`, `init`, and `configure` do not need it:
+
+```bash
+# Published
+NOCCIOLO_HINDSIGHT_API_KEY='your-actual-key' npx @nocciolo-ai/cli seed
+
+# Developing this repo
+NOCCIOLO_HINDSIGHT_API_KEY='your-actual-key' pnpm nocciolo seed
+
+# Or export once for the shell session
+export NOCCIOLO_HINDSIGHT_API_KEY='your-actual-key'
+pnpm nocciolo seed
+
+# Or pass the flag
+pnpm nocciolo seed --api-key 'your-actual-key'
+
+# Optional: read the key from a running Hindsight container
+NOCCIOLO_HINDSIGHT_API_KEY="$(docker exec suchconfig-hindsight printenv HINDSIGHT_API_TENANT_API_KEY)" \
+  pnpm nocciolo seed
+```
+
+Optional: put `nocciolo` on your PATH (`pnpm link --global` after `pnpm build`):
+
+```bash
+nocciolo seed --dry-run
+NOCCIOLO_HINDSIGHT_API_KEY='your-actual-key' nocciolo seed
+```
+
+Requires Node.js 20+. Point at a custom Hindsight URL with `--hindsight-url`, `NOCCIOLO_HINDSIGHT_URL`, or `hindsightBaseUrl` in `.nocciolo/config.json`. `HINDSIGHT_API_KEY` is accepted as an alias for `NOCCIOLO_HINDSIGHT_API_KEY`.
+
+The goal is a zero-to-useful bank in under five minutes.
+
+## Seeding with `nocciolo seed`
+
+`seed` is the heart of the workflow: curated retain into Hindsight — not a bulk markdown upload.
+
+**Preview first**
+
+```bash
+pnpm nocciolo seed --dry-run
+```
+
+Shows scored candidates from durable docs (README, AGENTS.md, docs, ADRs), with provenance and skips for empty or low-signal sections. No API calls.
+
+**Retain with clear progress**
+
+```bash
+NOCCIOLO_HINDSIGHT_API_KEY='your-key' pnpm nocciolo seed
+```
+
+Before retain starts you will see a warning like this — leave the terminal open until Nocciolo finishes:
+
+```text
+============================================================
+Hindsight is processing retain requests.
+Do not close this terminal or press Ctrl+C until Nocciolo reports completion.
+Sync mode: 28 item(s); each can take several seconds. Progress shows as percent of items.
+Interrupting mid-retain can leave a partial bank; re-run seed (use --force if needed).
+============================================================
+```
+
+Then progress lines appear as each candidate is retained:
+
+```text
+Retaining 28 item(s) synchronously (LLM extraction per item).
+Progress:
+  [1/28] 0%  starting  nocciolo:README.md#the-problem
+  [1/28] 4%  done      nocciolo:README.md#the-problem
+  ...
+```
+
+A full first seed can take several minutes (LLM extraction per item). That is expected, not a hang.
+
+- Uses stable `document_id`s so Hindsight **upserts** a document’s memories instead of dumping duplicate files into the bank
+- Skips secrets and noise (`.env`, credentials, etc.) — see [sensitive data](./docs/sensitive-data.md)
+- Auth failures stop early (pass `NOCCIOLO_HINDSIGHT_API_KEY` or `--api-key`)
+
+**Re-seed only what changed**
+
+Re-running `seed` hashes sources against `.nocciolo/local/seed-manifest.json`. Unchanged files are skipped; changed sections are re-retained. The bank is not wiped. Use `--force` to re-send everything.
+
+```bash
+pnpm nocciolo seed --dry-run          # see what would update
+pnpm nocciolo seed                    # incremental retain
+pnpm nocciolo seed --force            # re-retain all current candidates
+pnpm nocciolo seed --async            # submit + poll Hindsight operation progress
+```
+
+After retain, Hindsight may still run **consolidation** in the background (observations / mental models). That is expected and usually much faster than old file-sync workflows.
+
+Here is the Nocciolo bank’s world-facts constellation in Hindsight after a `seed` — structured memories and links agents can recall, not a dump of raw markdown files:
+
+![Nocciolo Hindsight world facts constellation](./images/nocciolo-world-facts.png)
+
+More detail: [developer workflow](./docs/dev-workflow.md).
+
+## Docs
+
+- [CLI architecture](./docs/cli-architecture.md) — module boundaries, seed pipeline, config, and env/auth for contributors
+- [Developer workflow](./docs/dev-workflow.md) — build, first seed, re-seed, and Hindsight retain/consolidation tips
+- [Sensitive data](./docs/sensitive-data.md) — allowlist/denylist decisions so secrets never get retained
 
 ## Core Principles
 

@@ -1,0 +1,55 @@
+---
+description: Enforce Nocciolo CLI module boundaries and seed/config conventions from docs/cli-architecture.md
+globs:
+  - "src/**/*.{ts,tsx}"
+  - "docs/cli-architecture.md"
+  - ".nocciolo/**/*"
+  - "package.json"
+alwaysApply: false
+---
+
+# CLI Architecture Workflow
+
+When changing the CLI, treat [docs/cli-architecture.md](docs/cli-architecture.md) as the map. Prefer updating that doc when boundaries or flows change.
+
+## Module placement
+
+Put logic in the matching layer — do not collapse stages into `commands/` or a single helper:
+
+| Concern | Module |
+|---------|--------|
+| Flags / UX / orchestration | `src/commands/` |
+| Root detection, git commit | `src/project/` |
+| `.nocciolo/config.json` schema + IO | `src/config/` |
+| Discover durable files | `src/scanner/` |
+| Heuristic candidates + provenance | `src/extractor/` |
+| Prepare retain + seed manifest | `src/seeder/` |
+| Hindsight template + HTTP retain | `src/providers/hindsight/` |
+
+Commands may call modules; modules must not depend on Commander.
+
+## Happy path invariants
+
+- Mutating or network commands support `--dry-run` where practical
+- `seed --dry-run` previews candidates; it must not call Hindsight
+- Live `seed` uses stable `document_id`s and writes incremental state only under `.nocciolo/local/` (gitignored)
+- Version-controlled config stays under `.nocciolo/` (`config.json`, `hindsight/bank-template.json`); never commit API keys
+
+## Hindsight connection
+
+Resolve URL/key in order: CLI flag → config (URL only) → env → default `http://localhost:8888`.
+
+- URL: `--hindsight-url`, `hindsightBaseUrl`, `NOCCIOLO_HINDSIGHT_URL` / `HINDSIGHT_URL`
+- Key: `--api-key`, `NOCCIOLO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY` (Bearer header; not stored in config)
+
+## Extraction / seeding
+
+- Conservative: better to miss a weak section than inject noise
+- Skip fenced code blocks when parsing markdown headings
+- Preserve provenance (source path + commit when available)
+- Prefer pure, unit-tested functions in scanner / extractor / template / client
+- Never retain secrets: deny `.env*`, keys, credential files, and `secrets/` / `credentials/` paths in the scanner before extract/seed
+
+## Errors
+
+Fail with `NoccioloError` (or equivalent) plus a concrete next step — e.g. run `init`, pass `--force`, or set an API key.
