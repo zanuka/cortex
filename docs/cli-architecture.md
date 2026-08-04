@@ -12,7 +12,7 @@ It is **not** a general multi-agent orchestrator. It is a local-first config + c
 2. Extract high-signal candidates (extractor)
 3. Generate bank templates (provider template)
 4. Retain into the memory system (seeder)
-5. Emit agent integration snippets (later — MCP stub today)
+5. Emit agent integration snippets (MCP configs, optional AGENTS.md / Cursor rules)
 
 Prefer missing a weak fact over injecting noise.
 
@@ -24,7 +24,8 @@ flowchart LR
     initCmd[init]
     configureCmd[configure]
     seedCmd[seed]
-    mcpCmd[mcp stub]
+    dockerCmd[docker]
+    mcpCmd[mcp]
   end
 
   subgraph core [Domain modules]
@@ -35,11 +36,14 @@ flowchart LR
     template[Hindsight template]
     seeder[seeder plus manifest]
     client[Hindsight HTTP client]
+    integration[integration snippets]
+    dockerHelper[docker helper]
   end
 
   subgraph disk [Project files]
     noccioloDir[".nocciolo/"]
     sources[README docs ADRs AGENTS]
+    agentFiles[".cursor mcp AGENTS rules"]
   end
 
   subgraph remote [Hindsight]
@@ -55,7 +59,11 @@ flowchart LR
   seeder -->|dry-run| seedCmd
   seeder -->|live retain| client --> bank
   seeder --> noccioloDir
-  mcpCmd -.->|Phase 3| bank
+  dockerCmd --> dockerHelper
+  dockerHelper -->|local instance| bank
+  mcpCmd --> config
+  mcpCmd --> integration --> agentFiles
+  integration -->|MCP URL| bank
 ```
 
 ### Seed pipeline detail
@@ -86,9 +94,11 @@ flowchart TD
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
 | `src/providers/hindsight/` | Bank template types/generator + HTTP retain client |
 | `src/seeder/` | Prepare retain payload, incremental manifest |
+| `src/integration/` | MCP URL + harness snippets + AGENTS/Cursor rule emitters |
+| `src/docker/` | Local Hindsight Docker run/stop/status plans |
 | `src/utils/` | Shared FS helpers and actionable errors |
 
-Keep these boundaries. Do not collapse scan → extract → retain into one opaque function.
+Keep these boundaries. Do not collapse scan → extract → retain into one opaque function. Integration emission stays separate from seeding.
 
 ## Happy path commands
 
@@ -96,24 +106,31 @@ Keep these boundaries. Do not collapse scan → extract → retain into one opaq
 pnpm install && pnpm build
 node dist/cli.js init
 node dist/cli.js configure
+node dist/cli.js docker print
 node dist/cli.js seed --dry-run
 node dist/cli.js seed
+node dist/cli.js mcp
+node dist/cli.js mcp --write --dry-run
 ```
 
 | Command | What it does |
 |---------|----------------|
-| `init` | Detect project root; write `.nocciolo/config.json` |
+| `init` | Detect project root; prompt (or flags) for bank id + Docker container; write `.nocciolo/config.json` |
 | `configure` | Generate Hindsight bank template under `.nocciolo/hindsight/` |
+| `docker` | Print or run a local Hindsight container (`up` / `down` / `status` / `print`) |
 | `seed --dry-run` | Scan + extract; print candidates; **no** API calls |
 | `seed` | Retain candidates into Hindsight; update local seed manifest |
-| `mcp` | Stub — Phase 3 will emit Cursor/Claude/MCP snippets |
+| `mcp` | Print ready-to-paste MCP snippets; optional `--write` / AGENTS / Cursor rules |
 
 Common flags:
 
 - `--dry-run` — preview without mutating (or without calling Hindsight for seed)
-- `--force` — overwrite config/template, or re-seed unchanged sources
+- `--force` — overwrite config/template/MCP entry, or re-seed unchanged sources
+- `--yes` / `-y` — on `init`, accept defaults without interactive prompts
+- `--bank-id <id>` — Hindsight bank id on `init` (project-specific; many banks can share one server)
+- `--container-name <name>` — local Docker container on `init` (shared Hindsight server)
 - `--hindsight-url <url>` — override Hindsight base URL for this run
-- `--api-key <key>` — override API key for this run
+- `--api-key <key>` — override API key for this run (seed) or enable tenant auth (docker) / print auth snippets (mcp)
 - `--async` — submit retain asynchronously to Hindsight
 
 ## Config and generated files
@@ -122,7 +139,7 @@ Version-controlled (commit these):
 
 ```text
 .nocciolo/
-  config.json                 # project name, bankId, provider, optional hindsightBaseUrl
+  config.json                 # project name, bankId, provider, optional hindsightBaseUrl + docker
   hindsight/
     bank-template.json        # importable Hindsight bank template (version "1")
 ```
@@ -136,11 +153,12 @@ Local / gitignored state (do **not** commit secrets or machine-local seed state)
   cache/
 ```
 
-`config.json` keeps `root: "."` (portable). Bank id defaults to a slug of the project name.
+`config.json` keeps `root: "."` (portable). Bank id defaults to a slug of the project name (directory name), never hardcoded to `nocciolo`.
 
-Optional config field:
+Optional config fields:
 
 - `hindsightBaseUrl` — default Hindsight server for this project (still overridable by env/CLI)
+- `docker.containerName` / `docker.volumeName` — local Docker helper defaults (shared server; not 1:1 with `bankId`)
 
 **Never** put API keys in version-controlled config. Use env vars or `--api-key`.
 
@@ -249,6 +267,35 @@ Use `--async` to submit the batch and have Nocciolo **poll** `GET /v1/default/ba
 
 Import the generated template into Hindsight (Control Plane or import API) before or alongside seeding so mission/directives match the project.
 
+## Local Docker helper
+
+`nocciolo docker` wraps the official Hindsight image (`ghcr.io/vectorize-io/hindsight:latest`):
+
+| Action | Behavior |
+|--------|----------|
+| `print` (default) | Print the `docker run` command (no execute) |
+| `up` / `start` | Start detached container (`--dry-run` to preview) |
+| `down` / `stop` | `docker rm -f` the container |
+| `status` | Show container status + API/UI URLs |
+
+Defaults: container `hindsight`, API `8888`, UI `9999`, volume `hindsight-data`. Resolution for container/volume: `--name` → `docker` in `.nocciolo/config.json` → those defaults. One container is a Hindsight **server** that can host many banks — do not treat container name as the bank id. LLM key from `--llm-api-key` or `OPENAI_API_KEY` / `HINDSIGHT_API_LLM_API_KEY`. Optional `--api-key` enables tenant auth (`HINDSIGHT_API_TENANT_API_KEY` + matching CP dataplane key).
+
+## Agent integration (MCP)
+
+`src/integration/` emits single-bank MCP URLs: `{baseUrl}/mcp/{bankId}/`.
+
+| Command | Behavior |
+|---------|----------|
+| `nocciolo mcp` | Print Cursor, Claude Code, Claude Desktop, Roo, Codex, Kiro snippets |
+| `nocciolo mcp --write` | Merge `.cursor/mcp.json` |
+| `nocciolo mcp --write-roo` / `--write-kiro` | Project Roo / Kiro MCP JSON |
+| `nocciolo mcp --write-agents` | Idempotent AGENTS.md section (HTML comment markers) |
+| `nocciolo mcp --write-cursor-rules` | `.cursor/rules/hindsight-bank.mdc` (`alwaysApply`) |
+| `--dry-run` | Preview writes without mutating |
+| `--include-auth` | Add Authorization headers (env placeholders on write) |
+
+Harness filter: `--harness cursor,claude-code`.
+
 ## Development tips
 
 ```bash
@@ -266,16 +313,17 @@ node dist/cli.js --help
 
 ## Current gaps (intentional)
 
-- `nocciolo mcp` is a stub (Phase 3)
-- No Docker / local Hindsight helper yet (Phase 3)
-- No interactive `configure` wizard yet
+- No interactive `configure` wizard yet (`init` prompts for bank id + Docker container name)
 - Extraction is conservative keyword heuristics, not ML
 - Single provider path: Hindsight first
+- Single bank per project config (multi-bank CLI is Phase 6; one Docker server can already host many banks)
+- Team sharing / deployment profiles (Phase 4)
 
 ## Related docs
 
 - [README](../README.md) — product overview and quick start
 - [Developer workflow](./dev-workflow.md) — build, first seed, re-seed, retain vs consolidation
+- [Developer testing](./dev-testing.md) — end-user command sequence and E2E regression checklist
 - [Sensitive data](./sensitive-data.md) — allowlist/denylist so secrets and noise stay out of banks
 - [AGENTS.md](../AGENTS.md) — principles for humans and agents
 - [ROADMAP.md](../ROADMAP.md) — phased plan

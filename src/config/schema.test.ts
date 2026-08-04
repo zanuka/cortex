@@ -1,12 +1,19 @@
-import { createDefaultConfig, NoccioloConfigSchema } from "./schema.js";
+import { describe, expect, it } from "vitest";
+import {
+  createDefaultConfig,
+  defaultVolumeName,
+  normalizeResourceName,
+  NoccioloConfigSchema,
+  slugify,
+} from "./schema.js";
 
 describe("NoccioloConfigSchema", () => {
   it("accepts a valid config", () => {
     const config = createDefaultConfig({
-      name: "nocciolo",
+      name: "my-app",
       root: ".",
     });
-    expect(NoccioloConfigSchema.parse(config).bankId).toBe("nocciolo");
+    expect(NoccioloConfigSchema.parse(config).bankId).toBe("my-app");
     expect(config.root).toBe(".");
   });
 
@@ -15,6 +22,34 @@ describe("NoccioloConfigSchema", () => {
       name: "My Cool App!",
     });
     expect(config.bankId).toBe("my-cool-app");
+  });
+
+  it("accepts explicit bankId and docker settings", () => {
+    const config = createDefaultConfig({
+      name: "My Cool App!",
+      bankId: "acme-brain",
+      docker: {
+        containerName: "hindsight",
+        volumeName: "hindsight-data",
+      },
+    });
+    expect(config.bankId).toBe("acme-brain");
+    expect(config.docker?.containerName).toBe("hindsight");
+    expect(NoccioloConfigSchema.parse(config).docker?.volumeName).toBe(
+      "hindsight-data",
+    );
+  });
+
+  it("accepts config without docker (backward compatible)", () => {
+    const parsed = NoccioloConfigSchema.parse({
+      version: 1,
+      name: "legacy",
+      provider: "hindsight",
+      bankId: "legacy",
+      root: ".",
+      createdAt: new Date().toISOString(),
+    });
+    expect(parsed.docker).toBeUndefined();
   });
 
   it("rejects invalid provider", () => {
@@ -28,5 +63,21 @@ describe("NoccioloConfigSchema", () => {
         createdAt: new Date().toISOString(),
       }),
     ).toThrow();
+  });
+});
+
+describe("slugify / normalizeResourceName", () => {
+  it("slugifies display names", () => {
+    expect(slugify("My Cool App!")).toBe("my-cool-app");
+  });
+
+  it("normalizes resource names", () => {
+    expect(normalizeResourceName("Acme Brain")).toBe("acme-brain");
+    expect(normalizeResourceName("hindsight")).toBe("hindsight");
+  });
+
+  it("derives volume names from container names", () => {
+    expect(defaultVolumeName("hindsight")).toBe("hindsight-data");
+    expect(defaultVolumeName("team-hindsight")).toBe("team-hindsight-data");
   });
 });

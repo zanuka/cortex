@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+export const DockerConfigSchema = z.object({
+  containerName: z.string().min(1),
+  volumeName: z.string().min(1).optional(),
+});
+
 export const NoccioloConfigSchema = z.object({
   version: z.literal(1),
   name: z.string().min(1),
@@ -8,8 +13,10 @@ export const NoccioloConfigSchema = z.object({
   root: z.string().min(1),
   createdAt: z.string().datetime(),
   hindsightBaseUrl: z.string().url().optional(),
+  docker: DockerConfigSchema.optional(),
 });
 
+export type DockerConfig = z.infer<typeof DockerConfigSchema>;
 export type NoccioloConfig = z.infer<typeof NoccioloConfigSchema>;
 
 export function createDefaultConfig(input: {
@@ -17,6 +24,7 @@ export function createDefaultConfig(input: {
   root?: string;
   bankId?: string;
   hindsightBaseUrl?: string;
+  docker?: DockerConfig;
 }): NoccioloConfig {
   const bankId = input.bankId ?? slugify(input.name);
   const config: NoccioloConfig = {
@@ -30,10 +38,13 @@ export function createDefaultConfig(input: {
   if (input.hindsightBaseUrl !== undefined) {
     config.hindsightBaseUrl = input.hindsightBaseUrl;
   }
+  if (input.docker !== undefined) {
+    config.docker = input.docker;
+  }
   return config;
 }
 
-function slugify(value: string): string {
+export function slugify(value: string): string {
   return (
     value
       .toLowerCase()
@@ -41,4 +52,16 @@ function slugify(value: string): string {
       .replace(/^-+|-+$/g, "")
       .slice(0, 64) || "project"
   );
+}
+
+export function normalizeResourceName(value: string): string {
+  const slug = slugify(value);
+  if (!slug || !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(slug)) {
+    return "project";
+  }
+  return slug;
+}
+
+export function defaultVolumeName(containerName: string): string {
+  return `${containerName}-data`;
 }

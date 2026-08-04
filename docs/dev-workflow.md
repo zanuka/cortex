@@ -38,7 +38,7 @@ Rebuild after TypeScript changes before dogfooding:
 pnpm build
 ```
 
-## Phase 1–2 happy path (first seed)
+## Phase 1–3 happy path (first seed + agent wiring)
 
 From the project you want to seed (this repo when dogfooding):
 
@@ -46,9 +46,18 @@ From the project you want to seed (this repo when dogfooding):
 
 ```bash
 pnpm nocciolo init
+# non-interactive / CI:
+pnpm nocciolo init --bank-id my-app --container-name hindsight --yes
 ```
 
-Creates version-controlled `.nocciolo/config.json` (`bankId`, provider, etc.). Re-run needs `--force`.
+In a TTY, `init` prompts for:
+
+1. **Hindsight bank id** (default: slug of the project directory name)
+2. **Docker container name** for the local Hindsight server (default: `hindsight`)
+
+Volume is derived as `{containerName}-data`. One Docker container can host many banks — choose a shared server name, not a per-bank container.
+
+Creates version-controlled `.nocciolo/config.json` (`bankId`, optional `docker`, provider, etc.). Re-run needs `--force`. Flags: `--name`, `--bank-id`, `--container-name`, `-y`/`--yes`.
 
 ### 2. Generate the Hindsight bank template
 
@@ -60,7 +69,17 @@ pnpm nocciolo configure --dry-run
 
 Writes `.nocciolo/hindsight/bank-template.json`. Import that template into Hindsight (Control Plane or import API) so mission/directives match the project, or create an empty bank with the same `bankId` and refine later.
 
-### 3. Preview what would be retained
+### 3. Local Hindsight (optional helper)
+
+```bash
+pnpm nocciolo docker print             # show docker run without executing
+OPENAI_API_KEY='…' pnpm nocciolo docker up
+pnpm nocciolo docker status
+```
+
+Uses `ghcr.io/vectorize-io/hindsight:latest` (API `:8888`, UI `:9999`). Container/volume resolve as: `--name` flag → `docker` in `.nocciolo/config.json` → defaults `hindsight` / `hindsight-data`. Pass `--api-key` to enable tenant auth on the container. `--dry-run` on `up` prints the command only.
+
+### 4. Preview what would be retained
 
 ```bash
 pnpm nocciolo seed --dry-run
@@ -68,7 +87,7 @@ pnpm nocciolo seed --dry-run
 
 No API calls. Prints scored candidates from README, AGENTS.md, docs/**, ADRs — plus skips (empty files, low-signal sections, unchanged sources).
 
-### 4. Live seed into Hindsight
+### 5. Live seed into Hindsight
 
 Use the **secret value** of your tenant API key (not the env var name). Prefer a real key; do not paste a Unicode `…` placeholder into the shell.
 
@@ -76,8 +95,8 @@ Use the **secret value** of your tenant API key (not the env var name). Prefer a
 # key only for this process
 NOCCIOLO_HINDSIGHT_API_KEY='your-actual-key' pnpm nocciolo seed
 
-# or pull from a running Docker container (example name)
-NOCCIOLO_HINDSIGHT_API_KEY="$(docker exec suchconfig-hindsight printenv HINDSIGHT_API_TENANT_API_KEY)" \
+# or pull from a running Docker container (use your container name from init / config)
+NOCCIOLO_HINDSIGHT_API_KEY="$(docker exec hindsight printenv HINDSIGHT_API_TENANT_API_KEY)" \
   pnpm nocciolo seed
 ```
 
@@ -131,6 +150,17 @@ If you see `401 Unauthorized`, set the API key (see above) and re-run. Auth erro
 
 With `--async`, Nocciolo polls Hindsight’s operations API for `processed`/`total` when the server provides a progress snapshot (same data the dashboard uses). Piping Docker logs is not supported — use the API or the Hindsight UI.
 
+### 6. Wire agents to the bank
+
+```bash
+pnpm nocciolo mcp                      # print Cursor / Claude Code / Roo / Codex / Kiro snippets
+pnpm nocciolo mcp --write --dry-run    # preview .cursor/mcp.json merge
+pnpm nocciolo mcp --write
+pnpm nocciolo mcp --write-agents --write-cursor-rules
+```
+
+MCP URL is single-bank: `{baseUrl}/mcp/{bankId}/`. Use `--include-auth` so written configs reference `NOCCIOLO_HINDSIGHT_API_KEY` via env placeholders (no secrets in git).
+
 ## What “seed” actually does
 
 Unlike older file upload / sync scripts, Nocciolo does **not** upload markdown files into Hindsight as a document corpus.
@@ -164,7 +194,9 @@ Unchanged sources (same content hash) are skipped. Use `--force` to re-retain ev
 
 ## Dogfooding this repository
 
-This repo already has `.nocciolo/` checked in for dogfooding (`bankId: "nocciolo"`). Typical loop:
+This repo already has `.nocciolo/` checked in for dogfooding. The **bank id** `nocciolo` is a project choice (this product’s own bank). The CLI / pnpm command is also named `nocciolo` — that is package branding, not a default for other projects. Local Docker defaults to container `hindsight` (shared server; many banks can live there).
+
+Typical loop:
 
 1. Change code or docs
 2. `pnpm build && pnpm test`
@@ -187,24 +219,26 @@ Empty placeholders such as `docs/dev-workflow.md` (before content landed) are sk
 
 ## Current phase checklist
 
-**Done (Phase 0–2 foundation)**
+**Done (Phase 0–3)**
 
 - [x] TypeScript CLI skeleton
 - [x] `init` / `configure` / `seed --dry-run` / live `seed`
 - [x] Incremental manifest under `.nocciolo/local/`
+- [x] `nocciolo docker` local Hindsight helper
+- [x] `nocciolo mcp` snippets + optional AGENTS / Cursor rules writes
 - [x] Architecture + this workflow doc
 
-**Next (Phase 3 — sketch)**
+**Next**
 
-- [ ] `nocciolo mcp` — emit Cursor / Claude Code MCP snippets
-- [ ] Optional Docker helper for local Hindsight
-- [ ] Wire agents to prefer the project bank
+- [ ] Phase 4 — team sharing & deployment profiles
+- [ ] Phase 5 — reliability & DX
 
 Update this file when a new command becomes part of the daily loop.
 
 ## Related
 
 - [cli-architecture.md](./cli-architecture.md) — modules, env resolution, seed pipeline
+- [dev-testing.md](./dev-testing.md) — end-user command sequence and E2E checklist
 - [sensitive-data.md](./sensitive-data.md) — secrets allowlist/denylist policy
 - [ROADMAP.md](../ROADMAP.md) — phased plan
 - [CONTRIBUTING.md](../CONTRIBUTING.md) — PR and setup conventions
