@@ -6,26 +6,27 @@ High-level phased plan. This is a living document — priorities will shift base
 
 - [x] Repository created
 - [x] README + vision
-- [ ] Basic project structure and TypeScript CLI skeleton
-- [ ] MIT license, contributing guidelines, CODE_OF_CONDUCT
+- [x] Basic project structure and TypeScript CLI skeleton
+- [x] MIT license, contributing guidelines, CODE_OF_CONDUCT
 - [ ] GitHub project board / issue templates for public development
 
 **Goal:** Clean starting point that makes the vision obvious and invites early feedback.
 
 ## Phase 1 — Core CLI + Hindsight Bank Config
 
-- [ ] `nocciolo init` — detect project root, scaffold `.nocciolo/` config
-- [ ] Bank template generation for Hindsight (mission, directives, extraction settings)
-- [ ] Sensible defaults for typical full-stack / web projects
-- [ ] `nocciolo configure` — interactive + non-interactive bank setup
-- [ ] Basic validation and dry-run support
+- [x] `nocciolo init` — detect project root, scaffold `.nocciolo/` config
+- [x] Bank template generation for Hindsight (mission, directives, extraction settings)
+- [x] Sensible defaults for typical full-stack / web projects
+- [x] `nocciolo configure` — non-interactive bank setup with `--dry-run` (interactive prompts later)
+- [x] Basic validation and dry-run support
 
 **Goal:** A developer can point Nocciolo at a repo and get a ready-to-apply Hindsight bank template in under a minute.
 
 ## Phase 2 — Knowledge Curation & Seeding
 
-- [ ] Project scanner for durable sources (README, `/docs`, ADRs, AGENTS.md, standards, key schemas)
+- [x] Project scanner for durable sources (README, `/docs`, ADRs, AGENTS.md) — conservative first pass
 - [ ] Extraction heuristics that prefer decisions, invariants, and architecture over ephemeral content
+- [x] `nocciolo seed --dry-run` — preview durable sources (live retain into Hindsight still pending)
 - [ ] `nocciolo seed` — retain high-signal knowledge into the configured bank with provenance
 - [ ] Incremental / re-seed support
 - [ ] Simple provenance tracking (source file + commit)

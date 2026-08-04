@@ -1,0 +1,49 @@
+{
+  "name": "@nocciolo-ai/cli",
+  "version": "0.1.0",
+  "description": "Company brain config for AI agents — seed Hindsight memory banks from durable project knowledge",
+  "type": "module",
+  "bin": {
+    "nocciolo": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "cli",
+    "hindsight",
+    "memory",
+    "agents",
+    "knowledge",
+    "nocciolo"
+  ],
+  "author": "Nocciolo",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nocciolo-ai/nocciolo.git"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

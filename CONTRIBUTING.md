@@ -10,16 +10,16 @@ Thanks for your interest in contributing. Nocciolo is being developed in public 
 
 ## Development Setup
 
-Once the TypeScript CLI scaffold lands:
-
 ```bash
 git clone <repo-url>
 cd nocciolo
-npm install
-npm run build   # or the equivalent once defined
+pnpm install
+pnpm build
+pnpm test
+node dist/cli.js --help
 ```
 
-Exact scripts will be documented as the project structure stabilizes.
+Useful scripts: `pnpm build`, `pnpm test`, `pnpm typecheck`, `pnpm start -- <command>`.
 
 ## How to Contribute
 
