@@ -46,6 +46,10 @@ High-level phased plan. This is a living document — priorities will shift base
 
 ## Phase 4 — Team Sharing & Deployment Profiles
 
+**Dogfood target:** [Strumentario](https://github.com/zanuka/strumentario) — first external repo to run the full `init` → `configure` → `seed` → `mcp` path on a shared local Hindsight server (same Docker container as the nocciolo bank, distinct `bankId`). Lessons from this pass drive shareable configs and deployment profiles.
+
+- [ ] Dogfood: create and seed a Hindsight bank for Strumentario via the Nocciolo CLI (shared container, bank id `strumentario`)
+- [ ] Capture dogfood gaps (multi-repo DX, bank template apply, shareable config shape) back into this phase
 - [ ] Shareable knowledgebase configs so teams can consume the same bank across machines and harnesses
 - [ ] Deployment profile: **local / LAN** — single machine or trusted network, minimal exposure
 - [ ] Deployment profile: **VPN** — bank reachable only inside a private network for closed teams

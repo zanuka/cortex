@@ -212,6 +212,7 @@ Empty placeholders such as `docs/dev-workflow.md` (before content landed) are sk
 |---------|----------------|
 | `ByteString` / character 8230 | Literal `…` used as the API key — use the real secret |
 | `401 Invalid API key` | Wrong key, or key not passed; must match server tenant key |
+| Retain `500` / `Fact extraction failed` / `ConnectError` | Hindsight cannot reach its LLM — if using Ollama, start it and ensure the container can reach the host URL |
 | CLI “stuck” with no new lines | Sync retain waiting on LLM extract; watch container logs or rebuild for `[i/N]` progress |
 | Dashboard shows 0 mid-run | Refresh after items complete; consolidation may still be running |
 | `Bank template already exists` | Use `configure --force` or skip if template is fine |
