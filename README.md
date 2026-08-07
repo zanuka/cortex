@@ -210,9 +210,11 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 
 ## Docs
 
+- [Knowledge-base configs](./docs/nocciolo-configs.md) — `.nocciolo/` files, bank template, seed manifest, and MCP recall
 - [CLI architecture](./docs/cli-architecture.md) — module boundaries, seed pipeline, config, and env/auth for contributors
 - [Developer workflow](./docs/dev-workflow.md) — build, first seed, re-seed, and Hindsight retain/consolidation tips
 - [Developer testing](./docs/dev-testing.md) — end-user command sequence and E2E regression checklist
+- [Phase 4 dogfood gaps](./docs/phase-4-dogfood-gaps.md) — Strumentario lessons: multi-repo MCP, template apply, shareable config
 - [Sensitive data](./docs/sensitive-data.md) — allowlist/denylist decisions so secrets never get retained
 
 ## Core Principles

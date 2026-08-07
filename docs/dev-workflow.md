@@ -231,7 +231,7 @@ Empty placeholders such as `docs/dev-workflow.md` (before content landed) are sk
 
 **Next**
 
-- [ ] Phase 4 — team sharing & deployment profiles
+- [ ] Phase 4 — multi-repo MCP DX, template apply, shareable configs & deployment profiles ([dogfood gaps](./phase-4-dogfood-gaps.md))
 - [ ] Phase 5 — reliability & DX
 
 Update this file when a new command becomes part of the daily loop.

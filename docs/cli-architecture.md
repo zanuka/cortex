@@ -324,6 +324,7 @@ node dist/cli.js --help
 - [README](../README.md) — product overview and quick start
 - [Developer workflow](./dev-workflow.md) — build, first seed, re-seed, retain vs consolidation
 - [Developer testing](./dev-testing.md) — end-user command sequence and E2E regression checklist
+- [Phase 4 dogfood gaps](./phase-4-dogfood-gaps.md) — Strumentario multi-repo / template apply / shareable config lessons
 - [Sensitive data](./sensitive-data.md) — allowlist/denylist so secrets and noise stay out of banks
 - [AGENTS.md](../AGENTS.md) — principles for humans and agents
 - [ROADMAP.md](../ROADMAP.md) — phased plan

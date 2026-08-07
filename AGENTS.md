@@ -68,7 +68,7 @@ We are building this in public as open source.
 
 ## Current Focus
 
-See `ROADMAP.md`. Phase 3 (local Docker helper + MCP / agent integration emission) is in place; next is team sharing & deployment profiles (Phase 4) and reliability/DX (Phase 5).
+See `ROADMAP.md`. Phase 4 is underway: Strumentario dogfood gaps are captured in `docs/phase-4-dogfood-gaps.md` (multi-repo MCP DX, bank template apply, shareable config / deployment profiles).
 
 <!-- nocciolo:hindsight-bank -->
 

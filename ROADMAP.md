@@ -48,14 +48,17 @@ High-level phased plan. This is a living document — priorities will shift base
 
 **Dogfood target:** [Strumentario](https://github.com/zanuka/strumentario) — first external repo to run the full `init` → `configure` → `seed` → `mcp` path on a shared local Hindsight server (same Docker container as the nocciolo bank, distinct `bankId`). Lessons from this pass drive shareable configs and deployment profiles.
 
-- [ ] Dogfood: create and seed a Hindsight bank for Strumentario via the Nocciolo CLI (shared container, bank id `strumentario`)
-- [ ] Capture dogfood gaps (multi-repo DX, bank template apply, shareable config shape) back into this phase
-- [ ] Shareable knowledgebase configs so teams can consume the same bank across machines and harnesses
+- [x] Dogfood: create and seed a Hindsight bank for Strumentario via the Nocciolo CLI (shared container, bank id `strumentario`)
+- [x] Capture dogfood gaps (multi-repo DX, bank template apply, shareable config shape) back into this phase — see [docs/phase-4-dogfood-gaps.md](./docs/phase-4-dogfood-gaps.md)
+- [ ] Multi-repo MCP DX — bank-scoped MCP server names (e.g. `hindsight-<bankId>`), optional `--server-name`, Cursor auth/env guidance (and optional MCP connectivity check)
+- [ ] Bank template apply — `configure --apply` or `bank apply` to create/update the Hindsight bank from `.nocciolo/hindsight/bank-template.json` (`--dry-run`)
+- [ ] Shareable knowledgebase configs — split portable project identity from environment/profile (base URL strategy, no secrets in git)
 - [ ] Deployment profile: **local / LAN** — single machine or trusted network, minimal exposure
 - [ ] Deployment profile: **VPN** — bank reachable only inside a private network for closed teams
 - [ ] Deployment profile: **public** — intentionally exposed hosting when knowledge is meant to be open
 - [ ] Documented security defaults and trade-offs per profile (auth, TLS, network binding)
 - [ ] CLI helpers to generate and validate the chosen profile (`nocciolo share` or equivalent, with `--dry-run`)
+- [ ] Profile-aware MCP / harness emission (URLs and server names follow the active deployment profile)
 
 **Goal:** A team can publish one durable bank and let agents across the org inherit it — without forcing a single cloud path.
 
